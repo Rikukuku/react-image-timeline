@@ -32,6 +32,7 @@ export interface TimelineProps {
   events: Array<TimelineEvent>;
   reverseOrder?: boolean;
   denseLayout?: boolean;
+  imageIndexes?: Array<Number>;
 }
 
 const isNonZeroArray = (a: Array<TimelineEvent>) => Array.isArray(a) && a.length > 0;
@@ -94,7 +95,7 @@ const DefaultHeader = React.memo(function DefaultHeader(props: TimelineEventProp
 const DefaultFooter = React.memo(function DefaultFooter(props: TimelineEventProps) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
-    (props.event.onClick || (x => x))(e);
+    (props.event.onClick || ((x) => x))(e);
   };
 
   return (
@@ -134,7 +135,7 @@ const Clear = React.memo(function Clear(props) {
 });
 
 const Timeline = React.memo((props: TimelineProps) => {
-  const { events, customComponents, reverseOrder, denseLayout } = props;
+  const { events, customComponents, reverseOrder, denseLayout, imageIndexes } = props;
 
   const sortedEvents = events
     .slice(0)
@@ -157,42 +158,48 @@ const Timeline = React.memo((props: TimelineProps) => {
   const TextBodyComponent = (textBody || DefaultTextBody) as React.ComponentType<TimelineEventProps>;
   const FooterComponent = (footer || DefaultFooter) as React.ComponentType<TimelineEventProps>;
   const eventStyles = denseLayout ? { minHeight: 'auto' } : {};
-  return <div>
-    <div className="rt-timeline-container">
-      <ul className="rt-timeline">
-        <li key="top" className="rt-label-container">
-          <TopComponent event={takeFirst(sortedEvents)} />
-        </li>
-        {sortedEvents.map((event, index) => {
-          return (
-            <li className='rt-event' key={index} style={eventStyles}>
-              <div className="rt-backing">
-                <ArrowAndDot />
-                <div>
-                  <div className="rt-header-container">
-                    <HeaderComponent event={event} />
-                  </div>
-                  <div className="rt-image-container">
-                    <ImageBodyComponent event={event} />
-                  </div>
-                  <div className="rt-text-container">
-                    <TextBodyComponent event={event} />
-                  </div>
-                  <div className="rt-footer-container">
-                    <FooterComponent event={event} />
+  const longStyle = (idx: Number) => {
+    if (!imageIndexes || imageIndexes.length < 1) return {};
+    return imageIndexes.includes(idx) ? { minHeight: '6em' } : {};
+  };
+  return (
+    <div>
+      <div className="rt-timeline-container">
+        <ul className="rt-timeline">
+          <li key="top" className="rt-label-container">
+            <TopComponent event={takeFirst(sortedEvents)} />
+          </li>
+          {sortedEvents.map((event, index) => {
+            return (
+              <li className="rt-event" key={index} style={longStyle(index)}>
+                <div className="rt-backing">
+                  <ArrowAndDot />
+                  <div>
+                    <div className="rt-header-container">
+                      <HeaderComponent event={event} />
+                    </div>
+                    <div className="rt-image-container">
+                      <ImageBodyComponent event={event} />
+                    </div>
+                    <div className="rt-text-container">
+                      <TextBodyComponent event={event} />
+                    </div>
+                    <div className="rt-footer-container">
+                      <FooterComponent event={event} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          );
-        })}
-        <Clear />
-        <li key="bottom" className="rt-label-container">
-          <BottomComponent event={takeLast(sortedEvents)} />
-        </li>
-      </ul>
+              </li>
+            );
+          })}
+          <Clear />
+          <li key="bottom" className="rt-label-container">
+            <BottomComponent event={takeLast(sortedEvents)} />
+          </li>
+        </ul>
+      </div>
     </div>
-  </div>;
+  );
 });
 
 export default Timeline;
